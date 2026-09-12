@@ -17,6 +17,9 @@ export interface Restaurant {
   description: string | null;
   address: string | null;
   phone: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  tiktok_url?: string | null;
   logo_url: string | null;
   cover_image_url: string | null;
   theme: ThemeId;

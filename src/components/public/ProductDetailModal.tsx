@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { MenuItem, LanguageCode } from '../../types/database';
 import { ThemeConfig } from '../../lib/themes';
-import { getLocalizedText, I18N } from '../../lib/i18n';
+import { getLocalizedText, I18N, isRtl } from '../../lib/i18n';
 
 interface ProductDetailModalProps {
   item: MenuItem | null;
@@ -30,6 +30,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   if (!item) return null;
 
   const t = I18N[lang];
+  const rtl = isRtl(lang);
   const name = getLocalizedText(lang, item.name_fr, item.name_ar, item.name_en);
   const desc = getLocalizedText(lang, item.description_fr, item.description_ar, item.description_en);
 
@@ -67,6 +68,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     >
       <div
         id="product-detail-modal-content"
+        dir={rtl ? 'rtl' : 'ltr'}
         className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto transform transition-all p-0 shadow-2xl relative bg-white text-slate-900 border border-stone-200/80"
         onClick={(e) => e.stopPropagation()}
       >
@@ -75,7 +77,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           id="close-product-modal-btn"
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2.5 rounded-full shadow-lg bg-black/55 text-white backdrop-blur-md hover:bg-black/75 transition-all cursor-pointer active:scale-90"
+          className="absolute top-4 end-4 z-20 p-2.5 rounded-full shadow-lg bg-black/55 text-white backdrop-blur-md hover:bg-black/75 transition-all cursor-pointer active:scale-90"
           aria-label={t.close}
         >
           <X className="w-5 h-5" />
@@ -91,7 +93,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               loading="lazy"
             />
             {discountPercent && (
-              <div className="absolute top-4 left-4">
+              <div className="absolute top-4 start-4">
                 <span className="px-3 py-1 rounded-full text-xs font-black bg-[#FF6B00] text-white shadow-md">
                   -{discountPercent}% {t.promo}
                 </span>
@@ -107,7 +109,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         {/* Product Details Content */}
         <div className="p-6 sm:p-7">
           <div className="flex items-start justify-between gap-4">
-            <div>
+            <div className="text-start">
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
                 {name}
               </h2>
@@ -126,7 +128,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
 
             {/* Price Badge */}
-            <div className="text-right shrink-0">
+            <div className="text-end shrink-0">
               <div className="text-2xl sm:text-3xl font-black text-[#FF6B00] tracking-tight">
                 {typeof item.price === 'number'
                   ? item.price.toLocaleString('fr-FR', {
@@ -148,36 +150,36 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-stone-100 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">
               <Utensils className="w-3.5 h-3.5" />
-              Fait maison
+              {t.homemade}
             </span>
             {hasVeggie && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
                 <Leaf className="w-3.5 h-3.5" />
-                Végétal / Frais
+                {t.veggieFresh}
               </span>
             )}
             {hasFish && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 text-[#FF6B00] border border-orange-100">
                 <Fish className="w-3.5 h-3.5" />
-                Poisson & Fruits de mer
+                {t.fishSeafood}
               </span>
             )}
             {hasSpicy && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100">
                 <Flame className="w-3.5 h-3.5" />
-                Épicé & Pimenté
+                {t.spicyHot}
               </span>
             )}
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
               <ChefHat className="w-3.5 h-3.5" />
-              Recette originale
+              {t.originalRecipe}
             </span>
           </div>
 
           {/* Description */}
           <div className="mt-5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              Description du plat
+              {t.dishDescriptionLabel}
             </h4>
             {desc ? (
               <p className="text-sm sm:text-base leading-relaxed text-slate-600">
@@ -185,7 +187,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </p>
             ) : (
               <p className="text-sm italic text-slate-400">
-                Délicieuse préparation fraîchement cuisinée avec des ingrédients soigneusement sélectionnés.
+                {t.defaultDishDesc}
               </p>
             )}
           </div>
@@ -194,7 +196,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <div className="mt-8 pt-4 border-t border-stone-100 flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#FF6B00]" />
-              <span>Carte digitale consultative</span>
+              <span>{t.consultativeNotice}</span>
             </span>
             <span>{t.poweredBy}</span>
           </div>

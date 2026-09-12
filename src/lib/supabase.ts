@@ -174,6 +174,9 @@ const DEFAULT_DEMO_RESTAURANT: Restaurant = {
   description: 'Cuisine marocaine raffinée, pâtisseries artisanales & cafés d’exception au cœur de Marrakech.',
   address: '24 Avenue Mohammed VI, Hivernage, Marrakech',
   phone: '+212 5 24 43 00 00',
+  facebook_url: 'https://facebook.com/cafenakhil',
+  instagram_url: 'https://instagram.com/cafenakhil',
+  tiktok_url: 'https://tiktok.com/@cafenakhil',
   logo_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80',
   cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
   theme: 'moroccan',
@@ -456,12 +459,22 @@ export const localStore = {
     }
 
     const filtered = allCats.filter((c) => c.restaurant_id === restaurantId);
-    if (filtered.length > 0) return filtered;
-
-    if (restaurantId === DEFAULT_DEMO_RESTAURANT.id) {
-      return DEFAULT_DEMO_CATEGORIES;
-    }
-    return [];
+    const resultCats = filtered.length > 0 ? filtered : (restaurantId === DEFAULT_DEMO_RESTAURANT.id ? DEFAULT_DEMO_CATEGORIES : []);
+    
+    // Ensure all demo categories have full Arabic and English translations
+    return resultCats.map((cat) => {
+      const demo = DEFAULT_DEMO_CATEGORIES.find((d) => d.id === cat.id);
+      if (demo) {
+        return {
+          ...cat,
+          name_ar: cat.name_ar || demo.name_ar,
+          name_en: cat.name_en || demo.name_en,
+          description_ar: cat.description_ar || demo.description_ar,
+          description_en: cat.description_en || demo.description_en,
+        };
+      }
+      return cat;
+    });
   },
 
   saveCategories(cats: Category[]) {
@@ -499,12 +512,22 @@ export const localStore = {
     }
 
     const filtered = allItems.filter((i) => i.restaurant_id === restaurantId);
-    if (filtered.length > 0) return filtered;
+    const resultItems = filtered.length > 0 ? filtered : (restaurantId === DEFAULT_DEMO_RESTAURANT.id ? DEFAULT_DEMO_ITEMS : []);
 
-    if (restaurantId === DEFAULT_DEMO_RESTAURANT.id) {
-      return DEFAULT_DEMO_ITEMS;
-    }
-    return [];
+    // Ensure all demo items have full Arabic and English translations
+    return resultItems.map((item) => {
+      const demo = DEFAULT_DEMO_ITEMS.find((d) => d.id === item.id);
+      if (demo) {
+        return {
+          ...item,
+          name_ar: item.name_ar || demo.name_ar,
+          name_en: item.name_en || demo.name_en,
+          description_ar: item.description_ar || demo.description_ar,
+          description_en: item.description_en || demo.description_en,
+        };
+      }
+      return item;
+    });
   },
 
   saveItems(items: MenuItem[]) {

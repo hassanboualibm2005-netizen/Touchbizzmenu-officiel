@@ -10,6 +10,10 @@ import {
   Phone,
   FileText,
   Image as ImageIcon,
+  Instagram,
+  Facebook,
+  Music2,
+  Share2,
 } from 'lucide-react';
 import { Restaurant, ThemeId } from '../../types/database';
 import { saveRestaurantProfile } from '../../lib/api';
@@ -32,6 +36,9 @@ export const RestaurantProfile: React.FC<RestaurantProfileProps> = ({
   const [description, setDescription] = useState(restaurant.description || '');
   const [address, setAddress] = useState(restaurant.address || '');
   const [phone, setPhone] = useState(restaurant.phone || '');
+  const [facebookUrl, setFacebookUrl] = useState(restaurant.facebook_url || '');
+  const [instagramUrl, setInstagramUrl] = useState(restaurant.instagram_url || '');
+  const [tiktokUrl, setTiktokUrl] = useState(restaurant.tiktok_url || '');
   const [primaryColor, setPrimaryColor] = useState(restaurant.primary_color || '#2563eb');
   const [theme, setTheme] = useState<ThemeId>(restaurant.theme || 'classic');
   const [currency, setCurrency] = useState(restaurant.currency || 'DH');
@@ -113,6 +120,9 @@ export const RestaurantProfile: React.FC<RestaurantProfileProps> = ({
         description: description.trim() || null,
         address: address.trim() || null,
         phone: phone.trim() || null,
+        facebook_url: facebookUrl.trim() || null,
+        instagram_url: instagramUrl.trim() || null,
+        tiktok_url: tiktokUrl.trim() || null,
         primary_color: primaryColor,
         theme,
         currency,
@@ -402,6 +412,78 @@ export const RestaurantProfile: React.FC<RestaurantProfileProps> = ({
                   {primaryColor}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. RÉSEAUX SOCIAUX (Facebook, Instagram, TikTok) */}
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-blue-600" />
+              <span>Réseaux Sociaux</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Connectez vos profils sociaux pour afficher des boutons d'accès direct sur votre carte digitale.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {/* Instagram */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+                  <Instagram className="w-3.5 h-3.5" />
+                </span>
+                <span>Lien Instagram</span>
+              </label>
+              <input
+                id="restaurant-instagram-input"
+                type="url"
+                value={instagramUrl}
+                onChange={(e) => setInstagramUrl(e.target.value)}
+                placeholder="https://instagram.com/votre_etablissement"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Ex: https://instagram.com/cafenakhil</p>
+            </div>
+
+            {/* Facebook */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <Facebook className="w-3.5 h-3.5" />
+                </span>
+                <span>Lien Facebook</span>
+              </label>
+              <input
+                id="restaurant-facebook-input"
+                type="url"
+                value={facebookUrl}
+                onChange={(e) => setFacebookUrl(e.target.value)}
+                placeholder="https://facebook.com/votre_page"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Ex: https://facebook.com/cafenakhil</p>
+            </div>
+
+            {/* TikTok */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
+                  <Music2 className="w-3.5 h-3.5" />
+                </span>
+                <span>Lien TikTok</span>
+              </label>
+              <input
+                id="restaurant-tiktok-input"
+                type="url"
+                value={tiktokUrl}
+                onChange={(e) => setTiktokUrl(e.target.value)}
+                placeholder="https://tiktok.com/@votre_compte"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Ex: https://tiktok.com/@cafenakhil</p>
             </div>
           </div>
         </div>

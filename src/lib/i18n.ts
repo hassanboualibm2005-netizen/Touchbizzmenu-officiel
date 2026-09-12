@@ -5,6 +5,7 @@ export interface TranslationDictionary {
   allCategories: string;
   searchPlaceholder: string;
   noItemsFound: string;
+  noItemsFoundDesc: string;
   noCategoryItems: string;
   available: string;
   unavailable: string;
@@ -22,6 +23,30 @@ export interface TranslationDictionary {
   phone: string;
   close: string;
   details: string;
+  hours: string;
+  hoursValue: string;
+  restaurantTag: string;
+  searchResultsFor: string;
+  itemsCount: string;
+  clearSearch: string;
+  homemade: string;
+  veggieFresh: string;
+  fishSeafood: string;
+  spicyHot: string;
+  originalRecipe: string;
+  dishDescriptionLabel: string;
+  defaultDishDesc: string;
+  consultativeNotice: string;
+  shareMenu: string;
+  sharePromptText: string;
+  linkCopied: string;
+  followUs: string;
+  loadingMenu: string;
+  restaurantInfo: string;
+  categoriesLabel: string;
+  scrollLeft: string;
+  scrollRight: string;
+  selectLanguage: string;
 }
 
 export const I18N: Record<LanguageCode, TranslationDictionary> = {
@@ -30,6 +55,7 @@ export const I18N: Record<LanguageCode, TranslationDictionary> = {
     allCategories: 'Tout',
     searchPlaceholder: 'Rechercher un plat, une boisson...',
     noItemsFound: 'Aucun plat correspondant à votre recherche.',
+    noItemsFoundDesc: 'Essayez un autre mot-clé (ex: salade, tajine, thé, burger).',
     noCategoryItems: 'Aucun plat dans cette catégorie pour le moment.',
     available: 'Disponible',
     unavailable: 'Épuisé',
@@ -47,15 +73,40 @@ export const I18N: Record<LanguageCode, TranslationDictionary> = {
     phone: 'Téléphone',
     close: 'Fermer',
     details: 'Détails du plat',
+    hours: 'Horaires',
+    hoursValue: 'Tous les jours : 09:00 — 23:00',
+    restaurantTag: 'Restaurant & Café',
+    searchResultsFor: 'Résultats pour',
+    itemsCount: 'plat(s)',
+    clearSearch: 'Effacer la recherche',
+    homemade: 'Fait maison',
+    veggieFresh: 'Végétal / Frais',
+    fishSeafood: 'Poisson & Fruits de mer',
+    spicyHot: 'Épicé & Pimenté',
+    originalRecipe: 'Spécialité du chef',
+    dishDescriptionLabel: 'Description du plat',
+    defaultDishDesc: 'Délicieuse préparation fraîchement cuisinée avec des ingrédients soigneusement sélectionnés.',
+    consultativeNotice: 'Carte digitale consultative',
+    shareMenu: 'Partager le menu',
+    sharePromptText: 'Découvrez la carte de',
+    linkCopied: 'Lien de la carte copié !',
+    followUs: 'Suivez-nous sur les réseaux',
+    loadingMenu: 'Chargement de la carte...',
+    restaurantInfo: 'Informations du restaurant',
+    categoriesLabel: 'Catégories du menu',
+    scrollLeft: 'Défiler à gauche',
+    scrollRight: 'Défiler à droite',
+    selectLanguage: 'Choisir la langue',
   },
   ar: {
     currency: 'د.م',
     allCategories: 'الكل',
     searchPlaceholder: 'ابحث عن طبق أو مشروب...',
     noItemsFound: 'لا توجد أطباق مطابقة لبحثك.',
+    noItemsFoundDesc: 'جرب كلمة بحث أخرى (مثال: طاجين، سلطة، شاي، برجر).',
     noCategoryItems: 'لا توجد أطباق في هذا القسم حالياً.',
     available: 'متوفر',
-    unavailable: 'نفذ',
+    unavailable: 'غير متوفر',
     promo: 'عرض خاص',
     closed: 'مغلق حالياً',
     open: 'مفتوح',
@@ -70,12 +121,37 @@ export const I18N: Record<LanguageCode, TranslationDictionary> = {
     phone: 'الهاتف',
     close: 'إغلاق',
     details: 'تفاصيل الطبق',
+    hours: 'أوقات العمل',
+    hoursValue: 'يومياً: 09:00 — 23:00',
+    restaurantTag: 'مطعم ومقهى',
+    searchResultsFor: 'نتائج البحث عن',
+    itemsCount: 'أطباق',
+    clearSearch: 'مسح البحث',
+    homemade: 'تحضير منزلي',
+    veggieFresh: 'نباتي / طازج',
+    fishSeafood: 'أسماك ومأكولات بحرية',
+    spicyHot: 'حار ومتبل',
+    originalRecipe: 'اختيار الشيف',
+    dishDescriptionLabel: 'وصف الطبق',
+    defaultDishDesc: 'تحضير شهي بمكونات طازجة ومختارة بعناية فائقة.',
+    consultativeNotice: 'قائمة رقمية للاطلاع',
+    shareMenu: 'مشاركة القائمة',
+    sharePromptText: 'اكتشف قائمة طعام',
+    linkCopied: 'تم نسخ رابط القائمة!',
+    followUs: 'تابعونا على وسائل التواصل',
+    loadingMenu: 'جاري تحميل القائمة...',
+    restaurantInfo: 'معلومات المطعم',
+    categoriesLabel: 'أقسام القائمة',
+    scrollLeft: 'تمرير لليمين',
+    scrollRight: 'تمرير لليسار',
+    selectLanguage: 'اختر اللغة',
   },
   en: {
     currency: 'MAD',
     allCategories: 'All',
     searchPlaceholder: 'Search a dish, drink...',
     noItemsFound: 'No dishes matching your search.',
+    noItemsFoundDesc: 'Try another keyword (e.g. tagine, salad, tea, burger).',
     noCategoryItems: 'No items in this category yet.',
     available: 'Available',
     unavailable: 'Sold out',
@@ -93,12 +169,73 @@ export const I18N: Record<LanguageCode, TranslationDictionary> = {
     phone: 'Phone',
     close: 'Close',
     details: 'Dish details',
+    hours: 'Opening Hours',
+    hoursValue: 'Daily: 09:00 — 23:00',
+    restaurantTag: 'Restaurant & Café',
+    searchResultsFor: 'Results for',
+    itemsCount: 'item(s)',
+    clearSearch: 'Clear search',
+    homemade: 'Homemade',
+    veggieFresh: 'Plant-based / Fresh',
+    fishSeafood: 'Fish & Seafood',
+    spicyHot: 'Spicy & Hot',
+    originalRecipe: "Chef's Special",
+    dishDescriptionLabel: 'Dish description',
+    defaultDishDesc: 'Delicious dish freshly prepared with carefully selected ingredients.',
+    consultativeNotice: 'Digital consultative menu',
+    shareMenu: 'Share menu',
+    sharePromptText: 'Check out the menu of',
+    linkCopied: 'Menu link copied!',
+    followUs: 'Follow us on social media',
+    loadingMenu: 'Loading menu...',
+    restaurantInfo: 'Restaurant Information',
+    categoriesLabel: 'Menu categories',
+    scrollLeft: 'Scroll left',
+    scrollRight: 'Scroll right',
+    selectLanguage: 'Select language',
   },
 };
 
 export function isRtl(lang: LanguageCode): boolean {
   return lang === 'ar';
 }
+
+// Common dictionary for automatic fallback translation if name_ar / name_en is not set in DB
+const COMMON_TRANSLATIONS: Record<string, { ar: string; en: string }> = {
+  'petit-déjeuner': { ar: 'فطور الصباح', en: 'Breakfast' },
+  'petit dejeuner': { ar: 'فطور الصباح', en: 'Breakfast' },
+  'breakfast': { ar: 'فطور الصباح', en: 'Breakfast' },
+  'entrées & salades': { ar: 'المقبلات والسلطات', en: 'Starters & Salads' },
+  'entrees & salades': { ar: 'المقبلات والسلطات', en: 'Starters & Salads' },
+  'entrées': { ar: 'المقبلات', en: 'Starters' },
+  'entrees': { ar: 'المقبلات', en: 'Starters' },
+  'salades': { ar: 'السلطات', en: 'Salads' },
+  'plats principaux': { ar: 'الأطباق الرئيسية', en: 'Main Courses' },
+  'plats': { ar: 'الأطباق', en: 'Main Dishes' },
+  'spécialités marocaines': { ar: 'أطباق مغربية أصيلة', en: 'Moroccan Specialties' },
+  'specialites marocaines': { ar: 'أطباق مغربية أصيلة', en: 'Moroccan Specialties' },
+  'burgers & grillades': { ar: 'برجر ومشويات', en: 'Burgers & Grill' },
+  'burgers': { ar: 'برجر', en: 'Burgers' },
+  'grillades': { ar: 'مشويات', en: 'Grills' },
+  'desserts & pâtisseries': { ar: 'حلويات ومعجنات', en: 'Desserts & Pastries' },
+  'desserts & patisseries': { ar: 'حلويات ومعجنات', en: 'Desserts & Pastries' },
+  'desserts': { ar: 'الحلويات', en: 'Desserts' },
+  'boissons & thés': { ar: 'المشروبات والشاي', en: 'Beverages & Teas' },
+  'boissons & thes': { ar: 'المشروبات والشاي', en: 'Beverages & Teas' },
+  'boissons': { ar: 'المشروبات', en: 'Beverages' },
+  'café & thé': { ar: 'قهوة وشاي', en: 'Coffee & Tea' },
+  'jus frais': { ar: 'عصائر طازجة', en: 'Fresh Juices' },
+  'sandwiches': { ar: 'سندويشات', en: 'Sandwiches' },
+  'pizzas': { ar: 'بيتزا', en: 'Pizzas' },
+  'pâtes': { ar: 'معكرونة', en: 'Pasta' },
+  'pates': { ar: 'معكرونة', en: 'Pasta' },
+  'poissons & fruits de mer': { ar: 'أسماك وفواكه البحر', en: 'Fish & Seafood' },
+  'soupes': { ar: 'شوربات', en: 'Soups' },
+  'marrakech': { ar: 'مراكش', en: 'Marrakech' },
+  'casablanca': { ar: 'الدار البيضاء', en: 'Casablanca' },
+  'rabat': { ar: 'الرباط', en: 'Rabat' },
+  'tanger': { ar: 'طنجة', en: 'Tangier' },
+};
 
 export function getLocalizedText(
   lang: LanguageCode,
@@ -108,6 +245,35 @@ export function getLocalizedText(
 ): string {
   if (lang === 'ar' && arText?.trim()) return arText.trim();
   if (lang === 'en' && enText?.trim()) return enText.trim();
+
+  // Try common dictionary fallback if specific language is requested but missing
+  const cleanKey = (frText || '').toLowerCase().trim();
+  if (cleanKey && COMMON_TRANSLATIONS[cleanKey]) {
+    if (lang === 'ar' && COMMON_TRANSLATIONS[cleanKey].ar) {
+      return COMMON_TRANSLATIONS[cleanKey].ar;
+    }
+    if (lang === 'en' && COMMON_TRANSLATIONS[cleanKey].en) {
+      return COMMON_TRANSLATIONS[cleanKey].en;
+    }
+  }
+
   if (frText?.trim()) return frText.trim();
   return arText?.trim() || enText?.trim() || '';
 }
+
+export function formatCurrency(currency: string | undefined, lang: LanguageCode): string {
+  if (lang === 'ar') {
+    if (!currency || currency === 'DH' || currency === 'MAD' || currency === 'MAD') {
+      return 'د.م';
+    }
+    return currency;
+  }
+  if (lang === 'en') {
+    if (!currency || currency === 'DH') {
+      return 'MAD';
+    }
+    return currency;
+  }
+  return currency || 'DH';
+}
+

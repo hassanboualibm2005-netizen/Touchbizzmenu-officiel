@@ -6,17 +6,21 @@ import {
   Sparkles,
   Info,
   Share2,
+  ChevronLeft,
   ChevronRight,
   Clock,
   MapPin,
   Phone,
   Check,
   X,
+  Instagram,
+  Facebook,
+  Music2,
 } from 'lucide-react';
 import { Restaurant, Category, MenuItem, LanguageCode } from '../../types/database';
 import { fetchPublicMenu } from '../../lib/api';
 import { getTheme } from '../../lib/themes';
-import { I18N, isRtl, getLocalizedText } from '../../lib/i18n';
+import { I18N, isRtl, getLocalizedText, formatCurrency } from '../../lib/i18n';
 import { LanguageSelector } from './LanguageSelector';
 import { ProductCard } from './ProductCard';
 import { ProductDetailModal } from './ProductDetailModal';
@@ -40,7 +44,26 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [copiedToast, setCopiedToast] = useState(false);
-  const [lang, setLang] = useState<LanguageCode>('fr');
+  const [lang, setLang] = useState<LanguageCode>(() => {
+    try {
+      const saved = localStorage.getItem('touchbizz_menu_lang');
+      if (saved === 'ar' || saved === 'en' || saved === 'fr') {
+        return saved;
+      }
+    } catch {
+      // ignore
+    }
+    return 'fr';
+  });
+
+  const handleLanguageChange = (newLang: LanguageCode) => {
+    setLang(newLang);
+    try {
+      localStorage.setItem('touchbizz_menu_lang', newLang);
+    } catch {
+      // ignore
+    }
+  };
 
   const navScrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -136,12 +159,23 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
   const t = I18N[lang];
   const rtl = isRtl(lang);
   const theme = getTheme(restaurant?.theme);
-  const currency = restaurant?.currency || t.currency;
+  const currency = formatCurrency(restaurant?.currency, lang);
 
-  // Scroll category bar horizontally via arrow button
+  // Synchronize document dir and lang attribute
+  useEffect(() => {
+    document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+    return () => {
+      document.documentElement.dir = 'ltr';
+      document.documentElement.lang = 'fr';
+    };
+  }, [rtl, lang]);
+
+  // Scroll category bar horizontally via arrow buttons
   const handleScrollCategories = (direction: 'left' | 'right') => {
     if (!navScrollRef.current) return;
-    const scrollAmount = direction === 'left' ? -180 : 180;
+    const baseOffset = direction === 'left' ? -200 : 200;
+    const scrollAmount = rtl ? -baseOffset : baseOffset;
     navScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
@@ -179,8 +213,8 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
     if (navigator.share) {
       try {
         await navigator.share({
-          title: restaurant?.name || 'Menu Digital',
-          text: `Découvrez la carte de ${restaurant?.name || 'notre restaurant'}`,
+          title: restaurant?.name || 'TouchBizz Menu',
+          text: `${t.sharePromptText} ${restaurant?.name || ''}`,
           url,
         });
         return;
@@ -241,7 +275,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
       <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center p-4">
         <div className="w-12 h-12 rounded-full border-3 border-orange-200 border-t-[#FF6B00] animate-spin mb-4" />
         <p className="text-sm font-semibold text-slate-700 animate-pulse">
-          Chargement de la carte...
+          {t.loadingMenu}
         </p>
       </div>
     );
@@ -272,8 +306,13 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
   }
 
   const locationText = restaurant.address
-    ? restaurant.address.split(',')[0].trim().toUpperCase()
-    : 'MARRAKECH';
+    ? getLocalizedText(
+        lang,
+        restaurant.address.split(',')[0].trim().toUpperCase(),
+        restaurant.address.split(',')[0].trim(),
+        restaurant.address.split(',')[0].trim().toUpperCase()
+      )
+    : (lang === 'ar' ? 'مراكش' : 'MARRAKECH');
 
   return (
     <div
@@ -285,13 +324,13 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
       {copiedToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
           <Check className="w-4 h-4 text-emerald-400" />
-          <span>Lien de la carte copié !</span>
+          <span>{t.linkCopied}</span>
         </div>
       )}
 
       {/* 1. PROFILE / HEADER SECTION (Strictly matches provided screenshot) */}
       <header className="relative w-full overflow-hidden">
-        <div className="relative w-full min-h-[300px] sm:min-h-[340px] bg-stone-950 flex flex-col justify-between p-4 sm:p-6">
+        <div className="relative w-full min-h-[310px] sm:min-h-[350px] bg-stone-950 flex flex-col justify-between p-4 sm:p-6">
           {/* Hero Banner: Full-width dark cover photo background */}
           {restaurant.cover_image_url ? (
             <img
@@ -306,7 +345,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
           {/* Dark gradient overlay matching screenshot atmospheric lighting */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80 pointer-events-none" />
 
-          {/* Top Bar: Quick Action Pills capsule (top right) */}
+          {/* Top Bar: Quick Action Pills capsule (top end) */}
           <div className="relative z-10 flex items-center justify-end w-full">
             {/* Quick Action Pills: Top right corner floating capsule for (Info, Search, Share, Language Selector) */}
             <div className="flex items-center bg-black/50 backdrop-blur-md rounded-2xl p-1 text-white border border-white/15 shadow-xl">
@@ -315,8 +354,8 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 type="button"
                 onClick={() => setIsInfoModalOpen(true)}
                 className="p-2 hover:bg-white/15 rounded-xl transition-colors cursor-pointer text-white/90 hover:text-white active:scale-90"
-                title="Informations du restaurant"
-                aria-label="Informations"
+                title={t.restaurantInfo}
+                aria-label={t.restaurantInfo}
               >
                 <Info className="w-4 h-4" />
               </button>
@@ -326,8 +365,8 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 type="button"
                 onClick={toggleSearch}
                 className="p-2 hover:bg-white/15 rounded-xl transition-colors cursor-pointer text-white/90 hover:text-white active:scale-90"
-                title="Rechercher un plat"
-                aria-label="Rechercher"
+                title={t.searchPlaceholder}
+                aria-label={t.searchPlaceholder}
               >
                 <Search className="w-4 h-4" />
               </button>
@@ -337,8 +376,8 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 type="button"
                 onClick={handleShareMenu}
                 className="p-2 hover:bg-white/15 rounded-xl transition-colors cursor-pointer text-white/90 hover:text-white active:scale-90"
-                title="Partager la carte"
-                aria-label="Partager"
+                title={t.shareMenu}
+                aria-label={t.shareMenu}
               >
                 <Share2 className="w-4 h-4" />
               </button>
@@ -346,10 +385,10 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
               {/* Divider */}
               <div className="h-4 w-px bg-white/20 mx-1" />
 
-              {/* Language Selector Dropdown (Français ▾) */}
+              {/* Language Selector Dropdown */}
               <LanguageSelector
                 currentLang={lang}
-                onChange={setLang}
+                onChange={handleLanguageChange}
                 variant="capsule"
               />
             </div>
@@ -372,20 +411,65 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
             </div>
 
             {/* Text Info: Centered bold white Restaurant Name */}
-            <h1 className="mt-3.5 text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
+            <h1 className="mt-3 text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
               {restaurant.name}
             </h1>
 
-            {/* Sub-text for Location & Type (e.g. "MARRAKECH · Restaurant" or "LOMÉ · Restaurant") */}
+            {/* Sub-text for Location & Type */}
             <p className="mt-1 text-xs sm:text-sm font-semibold text-white/85 tracking-wider">
-              {locationText} · Restaurant
+              {locationText} · {t.restaurantTag}
             </p>
 
-            {/* Status badge ("● Ouvert · 09:00 - 23:00") */}
+            {/* Status badge */}
             <div className="mt-2 flex items-center justify-center gap-2 text-xs font-medium text-white/90">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-xs" />
-              <span>Ouvert · 09:00 - 23:00</span>
+              <span>{t.open} · {t.hoursValue}</span>
             </div>
+
+            {/* Social Media Links (Instagram, Facebook, TikTok) */}
+            {(restaurant.instagram_url || restaurant.facebook_url || restaurant.tiktok_url) && (
+              <div className="mt-3 flex items-center justify-center gap-2.5">
+                {restaurant.instagram_url && (
+                  <a
+                    id="menu-social-instagram"
+                    href={restaurant.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/35 text-white backdrop-blur-md border border-white/25 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-xs"
+                    title={t.instagram}
+                    aria-label={t.instagram}
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                )}
+                {restaurant.facebook_url && (
+                  <a
+                    id="menu-social-facebook"
+                    href={restaurant.facebook_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/35 text-white backdrop-blur-md border border-white/25 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-xs"
+                    title={t.facebook}
+                    aria-label={t.facebook}
+                  >
+                    <Facebook className="w-4 h-4" />
+                  </a>
+                )}
+                {restaurant.tiktok_url && (
+                  <a
+                    id="menu-social-tiktok"
+                    href={restaurant.tiktok_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/35 text-white backdrop-blur-md border border-white/25 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-xs"
+                    title={t.tiktok}
+                    aria-label={t.tiktok}
+                  >
+                    <Music2 className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Spacing alignment */}
@@ -397,20 +481,21 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
       {isSearchOpen && (
         <div className="bg-white border-b border-stone-200/80 px-4 py-3 shadow-xs animate-in fade-in slide-in-from-top-2">
           <div className="max-w-4xl mx-auto relative flex items-center">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 absolute start-3 pointer-events-none" />
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher une entrée, un plat, une boisson..."
-              className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-[#FAF7F2] text-slate-900 placeholder-slate-400 text-xs sm:text-sm border border-stone-200/70 focus:border-[#FF6B00] focus:bg-white focus:outline-none transition-all"
+              placeholder={t.searchPlaceholder}
+              className="w-full ps-9 pe-9 py-2.5 rounded-xl bg-[#FAF7F2] text-slate-900 placeholder-slate-400 text-xs sm:text-sm border border-stone-200/70 focus:border-[#FF6B00] focus:bg-white focus:outline-none transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-slate-700"
+                className="absolute end-3 p-1 rounded-full text-slate-400 hover:text-slate-700 cursor-pointer"
+                aria-label={t.clearSearch}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -421,10 +506,20 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
 
       {/* 2. SCROLLSPY CATEGORY BAR (Sticky top bar with category pills & auto active sync) */}
       <nav
-        aria-label="Catégories du menu"
+        aria-label={t.categoriesLabel}
         className="sticky top-0 z-30 w-full bg-[#FAF7F2]/95 backdrop-blur-md border-b border-stone-200/70 py-2.5 shadow-2xs transition-all"
       >
         <div className="max-w-4xl mx-auto px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2">
+          {/* Horizontal scroll left button */}
+          <button
+            type="button"
+            onClick={() => handleScrollCategories('left')}
+            className="w-8 h-8 rounded-full bg-white border border-stone-200 text-slate-600 flex items-center justify-center shrink-0 shadow-2xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-4 h-4 text-slate-500" />
+          </button>
+
           {/* Horizontally scrollable list of pills */}
           <div
             ref={navScrollRef}
@@ -457,8 +552,8 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
           <button
             type="button"
             onClick={() => handleScrollCategories('right')}
-            className="w-8 h-8 rounded-full bg-white border border-sky-300/80 text-slate-600 flex items-center justify-center shrink-0 shadow-2xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
-            aria-label="Défiler les catégories"
+            className="w-8 h-8 rounded-full bg-white border border-stone-200 text-slate-600 flex items-center justify-center shrink-0 shadow-2xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+            aria-label="Scroll right"
           >
             <ChevronRight className="w-4 h-4 text-slate-500" />
           </button>
@@ -472,8 +567,8 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 ? 'bg-[#FF6B00] text-white border-[#FF6B00]'
                 : 'bg-white border-stone-200 text-slate-600 hover:bg-slate-50'
             }`}
-            title="Rechercher"
-            aria-label="Rechercher"
+            title={t.searchPlaceholder}
+            aria-label={t.searchPlaceholder}
           >
             <Search className="w-3.5 h-3.5" />
           </button>
@@ -486,10 +581,10 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
         {searchQuery.trim() && (
           <div className="mb-6 flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-stone-200/80 shadow-2xs">
             <span className="text-xs sm:text-sm text-slate-600">
-              Résultats pour &ldquo;<span className="font-bold text-slate-900">{searchQuery}</span>&rdquo;
+              {t.searchResultsFor} &ldquo;<span className="font-bold text-slate-900">{searchQuery}</span>&rdquo;
             </span>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-100 text-[#FF6B00]">
-              {filteredItems.length} plat{filteredItems.length > 1 ? 's' : ''}
+              {filteredItems.length} {t.itemsCount}
             </span>
           </div>
         )}
@@ -502,14 +597,14 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
               {t.noItemsFound}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Essayez un autre mot-clé (ex: salade, poisson, poulet).
+              {t.noItemsFoundDesc}
             </p>
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="mt-4 px-4 py-2 rounded-xl bg-orange-50 text-[#FF6B00] text-xs font-bold hover:bg-orange-100 transition-colors"
+              className="mt-4 px-4 py-2 rounded-xl bg-orange-50 text-[#FF6B00] text-xs font-bold hover:bg-orange-100 transition-colors cursor-pointer"
             >
-              Effacer la recherche
+              {t.clearSearch}
             </button>
           </div>
         )}
@@ -528,7 +623,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
               className="mb-8 scroll-mt-24"
             >
               {/* Category Section Header matching screenshot:
-                  Dark green vertical bar on left + uppercase orange category title */}
+                  Dark green vertical bar on start edge + uppercase orange category title */}
               <div className="flex items-center gap-2 mb-3.5">
                 <span className="w-1 h-4.5 rounded-full bg-[#15803d]" />
                 <h2 className="text-xs sm:text-sm font-black uppercase text-[#FF6B00] tracking-wider">
@@ -582,12 +677,13 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
           onClick={() => setIsInfoModalOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-stone-200 animate-in zoom-in-95 duration-150"
+            dir={rtl ? 'rtl' : 'ltr'}
+            className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-stone-200 animate-in zoom-in-95 duration-150 text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#FF6B00] flex items-center justify-center font-bold text-lg shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#FF6B00] flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
                   {restaurant.logo_url ? (
                     <img
                       src={restaurant.logo_url}
@@ -599,11 +695,11 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                   )}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">
+                  <h3 className="text-lg font-bold text-slate-900 leading-snug">
                     {restaurant.name}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
-                    {locationText} · Restaurant
+                    {locationText} · {t.restaurantTag}
                   </p>
                 </div>
               </div>
@@ -612,6 +708,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 type="button"
                 onClick={() => setIsInfoModalOpen(false)}
                 className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                aria-label={t.close}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -627,11 +724,11 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
               <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <Clock className="w-4 h-4 text-[#FF6B00] shrink-0" />
                 <div className="flex-1">
-                  <span className="font-semibold text-slate-900 block text-xs">Horaires</span>
-                  <span className="text-slate-500 text-xs">Tous les jours : 09:00 — 23:00</span>
+                  <span className="font-semibold text-slate-900 block text-xs">{t.hours}</span>
+                  <span className="text-slate-500 text-xs">{t.hoursValue}</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                  Ouvert
+                  {t.open}
                 </span>
               </div>
 
@@ -639,7 +736,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                   <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0" />
                   <div className="flex-1">
-                    <span className="font-semibold text-slate-900 block text-xs">Adresse</span>
+                    <span className="font-semibold text-slate-900 block text-xs">{t.address}</span>
                     <span className="text-slate-600 text-xs">{restaurant.address}</span>
                   </div>
                 </div>
@@ -649,13 +746,57 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                   <Phone className="w-4 h-4 text-[#FF6B00] shrink-0" />
                   <div className="flex-1">
-                    <span className="font-semibold text-slate-900 block text-xs">Téléphone</span>
+                    <span className="font-semibold text-slate-900 block text-xs">{t.phone}</span>
                     <a
                       href={`tel:${restaurant.phone}`}
                       className="text-[#FF6B00] font-bold text-xs hover:underline"
                     >
                       {restaurant.phone}
                     </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Social Media Links in Modal */}
+              {(restaurant.instagram_url || restaurant.facebook_url || restaurant.tiktok_url) && (
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="font-semibold text-slate-900 block text-xs mb-2">
+                    {t.followUs}
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {restaurant.instagram_url && (
+                      <a
+                        href={restaurant.instagram_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-pink-600 hover:bg-pink-50 transition-colors shadow-2xs"
+                      >
+                        <Instagram className="w-3.5 h-3.5" />
+                        <span>Instagram</span>
+                      </a>
+                    )}
+                    {restaurant.facebook_url && (
+                      <a
+                        href={restaurant.facebook_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors shadow-2xs"
+                      >
+                        <Facebook className="w-3.5 h-3.5" />
+                        <span>Facebook</span>
+                      </a>
+                    )}
+                    {restaurant.tiktok_url && (
+                      <a
+                        href={restaurant.tiktok_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 hover:bg-slate-100 transition-colors shadow-2xs"
+                      >
+                        <Music2 className="w-3.5 h-3.5" />
+                        <span>TikTok</span>
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
@@ -666,7 +807,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
               onClick={() => setIsInfoModalOpen(false)}
               className="mt-6 w-full py-2.5 rounded-xl bg-[#FF6B00] text-white text-xs sm:text-sm font-bold shadow-sm hover:bg-orange-600 active:scale-98 transition-all cursor-pointer"
             >
-              Fermer
+              {t.close}
             </button>
           </div>
         </div>

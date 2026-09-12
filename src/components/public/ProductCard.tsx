@@ -87,7 +87,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Promo Tag */}
           {discountPercent && (
-            <div className="absolute top-2 left-2">
+            <div className="absolute top-2 start-2">
               <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FF6B00] text-white shadow-sm">
                 -{discountPercent}%
               </span>
@@ -105,7 +105,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* 2. Title and Small Tags below */}
-        <div className="p-3 pb-1 flex flex-col">
+        <div className="p-3 pb-1 flex flex-col text-start">
           <h3 className="text-xs sm:text-sm font-bold text-[#D35400] hover:text-[#FF6B00] line-clamp-2 leading-snug tracking-tight">
             {name}
           </h3>
@@ -114,7 +114,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             {/* Always show staple protein/gourmet badge */}
             <span
-              title="Préparation maison"
+              title={t.homemade}
               className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[10px] shadow-2xs shrink-0"
             >
               <Utensils className="w-3 h-3" />
@@ -123,7 +123,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {/* Veggie / Fresh badge */}
             {hasVeggie && (
               <span
-                title="Frais & Légumes"
+                title={t.veggieFresh}
                 className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] shadow-2xs shrink-0"
               >
                 <Leaf className="w-3 h-3" />
@@ -133,7 +133,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {/* Chef signature badge */}
             {(hasChef || (!hasVeggie && !hasFish)) && (
               <span
-                title="Spécialité du chef"
+                title={t.originalRecipe}
                 className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] shadow-2xs shrink-0"
               >
                 <ChefHat className="w-3 h-3" />
@@ -143,7 +143,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {/* Fish badge */}
             {hasFish && (
               <span
-                title="Poisson frais"
+                title={t.fishSeafood}
                 className="w-5 h-5 rounded-full bg-orange-100 text-[#FF6B00] flex items-center justify-center text-[10px] shadow-2xs shrink-0"
               >
                 <Fish className="w-3 h-3" />
@@ -153,7 +153,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {/* Spicy badge */}
             {hasSpicy && (
               <span
-                title="Épicé / Pimenté"
+                title={t.spicyHot}
                 className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] shadow-2xs shrink-0"
               >
                 <Flame className="w-3 h-3" />
@@ -185,7 +185,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Small subtle availability indicator */}
         {!item.is_available && (
           <span className="text-[10px] font-semibold text-slate-400">
-            Épuisé
+            {t.unavailable}
           </span>
         )}
       </div>
