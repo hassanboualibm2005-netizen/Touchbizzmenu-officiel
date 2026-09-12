@@ -20,7 +20,14 @@ import {
 import { Restaurant, Category, MenuItem, LanguageCode } from '../../types/database';
 import { fetchPublicMenu } from '../../lib/api';
 import { getTheme } from '../../lib/themes';
-import { I18N, isRtl, getLocalizedText, formatCurrency } from '../../lib/i18n';
+import {
+  I18N,
+  isRtl,
+  getLocalizedText,
+  getLocalizedCategoryName,
+  getLocalizedItemName,
+  formatCurrency,
+} from '../../lib/i18n';
 import { LanguageSelector } from './LanguageSelector';
 import { ProductCard } from './ProductCard';
 import { ProductDetailModal } from './ProductDetailModal';
@@ -46,9 +53,12 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
   const [copiedToast, setCopiedToast] = useState(false);
   const [lang, setLang] = useState<LanguageCode>(() => {
     try {
-      const saved = localStorage.getItem('touchbizz_menu_lang');
+      const saved =
+        localStorage.getItem('touchbizz_menu_lang') ||
+        localStorage.getItem('selected_language') ||
+        localStorage.getItem('touchbizz_lang');
       if (saved === 'ar' || saved === 'en' || saved === 'fr') {
-        return saved;
+        return saved as LanguageCode;
       }
     } catch {
       // ignore
@@ -60,9 +70,14 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
     setLang(newLang);
     try {
       localStorage.setItem('touchbizz_menu_lang', newLang);
+      localStorage.setItem('selected_language', newLang);
+      localStorage.setItem('touchbizz_lang', newLang);
     } catch {
       // ignore
     }
+    // Synchronously update HTML direction and lang attribute
+    document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = newLang;
   };
 
   const navScrollRef = useRef<HTMLDivElement>(null);
@@ -249,12 +264,14 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
   const filteredItems = items.filter((item) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
+    const standardName = item.name_fr || (item as any).name || '';
+    const standardDesc = item.description_fr || (item as any).description || '';
     const nameMatch =
-      item.name_fr.toLowerCase().includes(q) ||
+      standardName.toLowerCase().includes(q) ||
       (item.name_ar && item.name_ar.toLowerCase().includes(q)) ||
       (item.name_en && item.name_en.toLowerCase().includes(q));
     const descMatch =
-      (item.description_fr && item.description_fr.toLowerCase().includes(q)) ||
+      standardDesc.toLowerCase().includes(q) ||
       (item.description_ar && item.description_ar.toLowerCase().includes(q)) ||
       (item.description_en && item.description_en.toLowerCase().includes(q));
     return nameMatch || descMatch;
@@ -346,7 +363,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80 pointer-events-none" />
 
           {/* Top Bar: Quick Action Pills capsule (top end) */}
-          <div className="relative z-10 flex items-center justify-end w-full">
+          <div className="relative z-30 flex items-center justify-end w-full">
             {/* Quick Action Pills: Top right corner floating capsule for (Info, Search, Share, Language Selector) */}
             <div className="flex items-center bg-black/50 backdrop-blur-md rounded-2xl p-1 text-white border border-white/15 shadow-xl">
               {/* Info Button */}
@@ -528,7 +545,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
             {categories
               .filter((c) => c.is_visible)
               .map((cat) => {
-                const catName = getLocalizedText(lang, cat.name_fr, cat.name_ar, cat.name_en);
+                const catName = getLocalizedCategoryName(cat, lang);
                 const isActive = activeCategory === cat.id;
                 return (
                   <button
@@ -611,7 +628,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
 
         {/* Categories and 2-Column Product Grid */}
         {visibleCategories.map((cat) => {
-          const catName = getLocalizedText(lang, cat.name_fr, cat.name_ar, cat.name_en);
+          const catName = getLocalizedCategoryName(cat, lang);
           const catItems = filteredItems.filter((item) => item.category_id === cat.id);
 
           if (catItems.length === 0) return null;

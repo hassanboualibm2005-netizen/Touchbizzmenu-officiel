@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { MenuItem, LanguageCode } from '../../types/database';
 import { ThemeConfig } from '../../lib/themes';
-import { getLocalizedText, I18N } from '../../lib/i18n';
+import { getLocalizedItemName, I18N } from '../../lib/i18n';
 
 interface ProductCardProps {
   item: MenuItem;
@@ -25,7 +25,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onSelect,
 }) => {
   const t = I18N[lang];
-  const name = getLocalizedText(lang, item.name_fr, item.name_ar, item.name_en);
+  const name = getLocalizedItemName(item, lang);
 
   const discountPercent =
     item.old_price && item.old_price > item.price
@@ -33,7 +33,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       : null;
 
   // Derive micro-badges matching the style in the screenshots
-  const lowerText = `${item.name_fr || ''} ${item.description_fr || ''}`.toLowerCase();
+  const lowerText = `${item.name_fr || (item as any).name || ''} ${item.description_fr || (item as any).description || ''}`.toLowerCase();
   const hasFish =
     lowerText.includes('poisson') ||
     lowerText.includes('saumon') ||

@@ -261,6 +261,99 @@ export function getLocalizedText(
   return arText?.trim() || enText?.trim() || '';
 }
 
+/**
+ * Dynamic Supabase fallback for dish names:
+ * 1. Checks item.name_ar or item.name_en if requested
+ * 2. If translated column is empty/missing, falls back to standard item.name (French) or item.name_fr
+ * 3. Checks common food dictionary before raw fallback
+ */
+export function getLocalizedItemName(
+  item: {
+    name?: string | null;
+    name_fr?: string | null;
+    name_ar?: string | null;
+    name_en?: string | null;
+  } | null | undefined,
+  lang: LanguageCode
+): string {
+  if (!item) return '';
+  if (lang === 'ar' && item.name_ar && item.name_ar.trim()) {
+    return item.name_ar.trim();
+  }
+  if (lang === 'en' && item.name_en && item.name_en.trim()) {
+    return item.name_en.trim();
+  }
+
+  const standardFrench = item.name_fr?.trim() || item.name?.trim() || '';
+  if (standardFrench) {
+    const cleanKey = standardFrench.toLowerCase().trim();
+    if (COMMON_TRANSLATIONS[cleanKey]) {
+      if (lang === 'ar' && COMMON_TRANSLATIONS[cleanKey].ar) return COMMON_TRANSLATIONS[cleanKey].ar;
+      if (lang === 'en' && COMMON_TRANSLATIONS[cleanKey].en) return COMMON_TRANSLATIONS[cleanKey].en;
+    }
+    return standardFrench;
+  }
+
+  return item.name_ar?.trim() || item.name_en?.trim() || '';
+}
+
+/**
+ * Dynamic Supabase fallback for dish descriptions:
+ * Checks description_ar / description_en, then description_fr or description
+ */
+export function getLocalizedItemDescription(
+  item: {
+    description?: string | null;
+    description_fr?: string | null;
+    description_ar?: string | null;
+    description_en?: string | null;
+  } | null | undefined,
+  lang: LanguageCode
+): string {
+  if (!item) return '';
+  if (lang === 'ar' && item.description_ar && item.description_ar.trim()) {
+    return item.description_ar.trim();
+  }
+  if (lang === 'en' && item.description_en && item.description_en.trim()) {
+    return item.description_en.trim();
+  }
+  return item.description_fr?.trim() || item.description?.trim() || item.description_ar?.trim() || item.description_en?.trim() || '';
+}
+
+/**
+ * Dynamic Supabase fallback for category names:
+ * Checks cat.name_ar or cat.name_en, then standard cat.name / cat.name_fr
+ */
+export function getLocalizedCategoryName(
+  cat: {
+    name?: string | null;
+    name_fr?: string | null;
+    name_ar?: string | null;
+    name_en?: string | null;
+  } | null | undefined,
+  lang: LanguageCode
+): string {
+  if (!cat) return '';
+  if (lang === 'ar' && cat.name_ar && cat.name_ar.trim()) {
+    return cat.name_ar.trim();
+  }
+  if (lang === 'en' && cat.name_en && cat.name_en.trim()) {
+    return cat.name_en.trim();
+  }
+
+  const standardFrench = cat.name_fr?.trim() || cat.name?.trim() || '';
+  if (standardFrench) {
+    const cleanKey = standardFrench.toLowerCase().trim();
+    if (COMMON_TRANSLATIONS[cleanKey]) {
+      if (lang === 'ar' && COMMON_TRANSLATIONS[cleanKey].ar) return COMMON_TRANSLATIONS[cleanKey].ar;
+      if (lang === 'en' && COMMON_TRANSLATIONS[cleanKey].en) return COMMON_TRANSLATIONS[cleanKey].en;
+    }
+    return standardFrench;
+  }
+
+  return cat.name_ar?.trim() || cat.name_en?.trim() || '';
+}
+
 export function formatCurrency(currency: string | undefined, lang: LanguageCode): string {
   if (lang === 'ar') {
     if (!currency || currency === 'DH' || currency === 'MAD' || currency === 'MAD') {

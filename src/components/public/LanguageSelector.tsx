@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
 import { LanguageCode } from '../../types/database';
 import { isRtl } from '../../lib/i18n';
 
@@ -9,10 +9,17 @@ interface LanguageSelectorProps {
   variant?: 'pill' | 'capsule';
 }
 
-const LANGUAGES: { code: LanguageCode; label: string; fullLabel: string; flag: string }[] = [
-  { code: 'fr', label: 'FR', fullLabel: 'Français', flag: '🇫🇷' },
-  { code: 'ar', label: 'العربية', fullLabel: 'العربية', flag: '🇲🇦' },
-  { code: 'en', label: 'EN', fullLabel: 'English', flag: '🇬🇧' },
+export interface LanguageOption {
+  code: LanguageCode;
+  label: string;
+  name: string;
+  flag: string;
+}
+
+export const LANGUAGES: LanguageOption[] = [
+  { code: 'fr', label: 'FR', name: 'Français', flag: '🇫🇷' },
+  { code: 'ar', label: 'MA - العربية', name: 'العربية', flag: '🇲🇦' },
+  { code: 'en', label: 'GB - English', name: 'English', flag: '🇬🇧' },
 ];
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
@@ -21,24 +28,35 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   variant = 'capsule',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const rtl = isRtl(currentLang);
 
   const activeLang = LANGUAGES.find((l) => l.code === currentLang) || LANGUAGES[0];
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const handleSelectLanguage = (code: LanguageCode, e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // 1. Store in localStorage immediately
+    try {
+      localStorage.setItem('touchbizz_menu_lang', code);
+      localStorage.setItem('selected_language', code);
+      localStorage.setItem('touchbizz_lang', code);
+    } catch {
+      // ignore
+    }
+
+    // 2. Synchronize document direction and lang attribute immediately
+    document.documentElement.dir = code === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = code;
+
+    // 3. Update parent state
+    onChange(code);
+    setIsOpen(false);
+  };
 
   return (
     <div
-      ref={dropdownRef}
       dir={rtl ? 'rtl' : 'ltr'}
       className="relative inline-block text-start"
       id="public-language-selector"
@@ -47,7 +65,11 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       <button
         type="button"
         id="language-selector-trigger"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         className={
           variant === 'capsule'
             ? 'px-2.5 py-1 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer select-none active:scale-95 shadow-xs'
@@ -57,7 +79,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         aria-expanded={isOpen}
       >
         <span className="text-sm shrink-0">{activeLang.flag}</span>
-        <span className="font-semibold">{activeLang.fullLabel}</span>
+        <span className="font-semibold text-xs tracking-tight">{activeLang.label}</span>
         <ChevronDown
           className={`w-3.5 h-3.5 text-white/80 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
@@ -65,44 +87,55 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         />
       </button>
 
-      {/* Dropdown options */}
+      {/* Dropdown options with transparent backdrop to prevent race conditions */}
       {isOpen && (
-        <div
-          dir={rtl ? 'rtl' : 'ltr'}
-          className={`absolute ${
-            rtl ? 'left-0' : 'right-0'
-          } mt-2 w-44 rounded-2xl bg-white/95 backdrop-blur-md shadow-2xl border border-stone-200/90 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}
-        >
-          {LANGUAGES.map((lang) => {
-            const isActive = currentLang === lang.code;
-            return (
-              <button
-                key={lang.code}
-                id={`lang-option-${lang.code}`}
-                type="button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange(lang.code);
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                  isActive
-                    ? 'bg-orange-50 text-[#FF6B00] font-bold shadow-2xs'
-                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base leading-none">{lang.flag}</span>
-                  <span className="text-xs font-semibold">{lang.fullLabel}</span>
-                </div>
-                {isActive && (
-                  <span className="w-2 h-2 rounded-full bg-[#FF6B00]" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <>
+          {/* Backdrop overlay catching clicks outside cleanly */}
+          <div
+            className="fixed inset-0 z-40 bg-transparent cursor-default"
+            aria-hidden="true"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsOpen(false);
+            }}
+          />
+
+          {/* Options menu */}
+          <div
+            dir={rtl ? 'rtl' : 'ltr'}
+            className={`absolute ${
+              rtl ? 'left-0' : 'right-0'
+            } mt-2 w-48 rounded-2xl bg-white shadow-2xl border border-stone-200 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}
+          >
+            {LANGUAGES.map((lang) => {
+              const isActive = currentLang === lang.code;
+              return (
+                <button
+                  key={lang.code}
+                  id={`lang-option-${lang.code}`}
+                  data-lang={lang.code}
+                  type="button"
+                  onMouseDown={(e) => handleSelectLanguage(lang.code, e)}
+                  onClick={(e) => handleSelectLanguage(lang.code, e)}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer select-none ${
+                    isActive
+                      ? 'bg-orange-50 text-[#FF6B00] font-bold shadow-2xs'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base leading-none shrink-0">{lang.flag}</span>
+                    <span className="text-xs font-semibold">{lang.label}</span>
+                  </div>
+                  {isActive ? (
+                    <Check className="w-3.5 h-3.5 text-[#FF6B00] shrink-0" />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

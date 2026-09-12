@@ -160,11 +160,27 @@ export async function fetchPublicMenu(slug: string): Promise<{
         handleDbError(itemErr, 'fetchPublicItems');
       }
 
+      const normalizedCats = (cats || []).map((c: any) => ({
+        ...c,
+        name_fr: c.name_fr || c.name || '',
+        name: c.name || c.name_fr || '',
+        description_fr: c.description_fr || c.description || null,
+        description: c.description || c.description_fr || null,
+      })) as Category[];
+
+      const normalizedItems = (items || []).map((it: any) => ({
+        ...it,
+        name_fr: it.name_fr || it.name || '',
+        name: it.name || it.name_fr || '',
+        description_fr: it.description_fr || it.description || null,
+        description: it.description || it.description_fr || null,
+      })) as MenuItem[];
+
       return {
         data: {
           restaurant: rest as Restaurant,
-          categories: (cats || []) as Category[],
-          items: (items || []) as MenuItem[],
+          categories: normalizedCats,
+          items: normalizedItems,
         },
       };
     } catch (err: any) {

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { MenuItem, LanguageCode } from '../../types/database';
 import { ThemeConfig } from '../../lib/themes';
-import { getLocalizedText, I18N, isRtl } from '../../lib/i18n';
+import { getLocalizedItemName, getLocalizedItemDescription, I18N, isRtl } from '../../lib/i18n';
 
 interface ProductDetailModalProps {
   item: MenuItem | null;
@@ -31,15 +31,15 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   const t = I18N[lang];
   const rtl = isRtl(lang);
-  const name = getLocalizedText(lang, item.name_fr, item.name_ar, item.name_en);
-  const desc = getLocalizedText(lang, item.description_fr, item.description_ar, item.description_en);
+  const name = getLocalizedItemName(item, lang);
+  const desc = getLocalizedItemDescription(item, lang);
 
   const discountPercent =
     item.old_price && item.old_price > item.price
       ? Math.round(((item.old_price - item.price) / item.old_price) * 100)
       : null;
 
-  const lowerText = `${item.name_fr || ''} ${item.description_fr || ''}`.toLowerCase();
+  const lowerText = `${item.name_fr || (item as any).name || ''} ${item.description_fr || (item as any).description || ''}`.toLowerCase();
   const hasFish =
     lowerText.includes('poisson') ||
     lowerText.includes('saumon') ||

@@ -33,9 +33,11 @@ export interface Restaurant {
 export interface Category {
   id: string;
   restaurant_id: string;
+  name?: string | null;
   name_fr: string;
   name_ar: string | null;
   name_en: string | null;
+  description?: string | null;
   description_fr: string | null;
   description_ar: string | null;
   description_en: string | null;
@@ -49,9 +51,11 @@ export interface MenuItem {
   id: string;
   restaurant_id: string;
   category_id: string;
+  name?: string | null;
   name_fr: string;
   name_ar: string | null;
   name_en: string | null;
+  description?: string | null;
   description_fr: string | null;
   description_ar: string | null;
   description_en: string | null;
