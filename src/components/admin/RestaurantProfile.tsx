@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   UploadCloud,
   Check,
@@ -15,10 +15,12 @@ import {
   Music2,
   Share2,
 } from 'lucide-react';
-import { Restaurant, ThemeId } from '../../types/database';
+import { Restaurant, ThemeId, OperatingHoursSchedule } from '../../types/database';
 import { saveRestaurantProfile } from '../../lib/api';
 import { uploadRestaurantAsset } from '../../lib/supabase';
 import { THEMES } from '../../lib/themes';
+import { OperatingHoursEditor } from './OperatingHoursEditor';
+import { normalizeOperatingHours } from '../../lib/operatingHours';
 
 interface RestaurantProfileProps {
   restaurant: Restaurant;
@@ -42,6 +44,15 @@ export const RestaurantProfile: React.FC<RestaurantProfileProps> = ({
   const [primaryColor, setPrimaryColor] = useState(restaurant.primary_color || '#2563eb');
   const [theme, setTheme] = useState<ThemeId>(restaurant.theme || 'classic');
   const [currency, setCurrency] = useState(restaurant.currency || 'DH');
+  const [operatingHours, setOperatingHours] = useState<OperatingHoursSchedule>(() =>
+    normalizeOperatingHours(restaurant.operating_hours || (restaurant as any).opening_hours)
+  );
+
+  useEffect(() => {
+    setOperatingHours(
+      normalizeOperatingHours(restaurant.operating_hours || (restaurant as any).opening_hours)
+    );
+  }, [restaurant.operating_hours, (restaurant as any).opening_hours]);
 
   const [logoUrl, setLogoUrl] = useState(restaurant.logo_url || '');
   const [coverUrl, setCoverUrl] = useState(restaurant.cover_image_url || '');
@@ -126,6 +137,7 @@ export const RestaurantProfile: React.FC<RestaurantProfileProps> = ({
         primary_color: primaryColor,
         theme,
         currency,
+        operating_hours: operatingHours,
         logo_url: logoUrl || null,
         cover_image_url: coverUrl || null,
       });
@@ -487,6 +499,12 @@ export const RestaurantProfile: React.FC<RestaurantProfileProps> = ({
             </div>
           </div>
         </div>
+
+        {/* 4. HORAIRES D'OUVERTURE (OPERATING HOURS) */}
+        <OperatingHoursEditor
+          value={operatingHours}
+          onChange={setOperatingHours}
+        />
 
         {/* Submit */}
         <div className="flex items-center justify-end gap-3 pt-2">

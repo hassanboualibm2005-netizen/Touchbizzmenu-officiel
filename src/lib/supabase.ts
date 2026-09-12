@@ -183,6 +183,15 @@ const DEFAULT_DEMO_RESTAURANT: Restaurant = {
   primary_color: '#c2410c',
   is_published: true,
   currency: 'DH',
+  operating_hours: {
+    monday: { isOpen: true, openTime: '08:00', closeTime: '23:30' },
+    tuesday: { isOpen: true, openTime: '08:00', closeTime: '23:30' },
+    wednesday: { isOpen: true, openTime: '08:00', closeTime: '23:30' },
+    thursday: { isOpen: true, openTime: '08:00', closeTime: '23:30' },
+    friday: { isOpen: true, openTime: '08:00', closeTime: '23:30' },
+    saturday: { isOpen: true, openTime: '08:00', closeTime: '23:30' },
+    sunday: { isOpen: true, openTime: '08:00', closeTime: '23:30' },
+  },
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };

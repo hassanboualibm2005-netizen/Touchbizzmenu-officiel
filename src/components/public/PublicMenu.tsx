@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   Search,
   UtensilsCrossed,
@@ -28,6 +28,7 @@ import {
   getLocalizedItemName,
   formatCurrency,
 } from '../../lib/i18n';
+import { getOperatingStatus, DAY_LABELS, DAYS_ORDER } from '../../lib/operatingHours';
 import { LanguageSelector } from './LanguageSelector';
 import { ProductCard } from './ProductCard';
 import { ProductDetailModal } from './ProductDetailModal';
@@ -84,6 +85,21 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isManualScroll = useRef<boolean>(false);
   const manualScrollTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Real-time operating hours dynamic status calculation
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentDate(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const operatingStatus = useMemo(() => {
+    return getOperatingStatus(
+      restaurant?.operating_hours || (restaurant as any)?.opening_hours,
+      lang,
+      currentDate
+    );
+  }, [restaurant?.operating_hours, (restaurant as any)?.opening_hours, lang, currentDate]);
 
   // Load menu data
   useEffect(() => {
@@ -439,8 +455,16 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
 
             {/* Status badge */}
             <div className="mt-2 flex items-center justify-center gap-2 text-xs font-medium text-white/90">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-xs" />
-              <span>{t.open} · {t.hoursValue}</span>
+              <span
+                className={`inline-block w-2 h-2 rounded-full shadow-xs ${
+                  operatingStatus.isOpen
+                    ? 'bg-emerald-400 animate-pulse shadow-emerald-400/50'
+                    : 'bg-rose-400 shadow-rose-400/50'
+                }`}
+              />
+              <span className="font-bold">{operatingStatus.statusText}</span>
+              <span className="text-white/60">·</span>
+              <span>{operatingStatus.todayHoursText}</span>
             </div>
 
             {/* Social Media Links (Instagram, Facebook, TikTok) */}
@@ -690,32 +714,35 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
       {/* Restaurant Info Modal (Opened via top right "i" pill button) */}
       {isInfoModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+          id="restaurant-info-modal-backdrop"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
           onClick={() => setIsInfoModalOpen(false)}
         >
           <div
+            id="restaurant-info-modal"
             dir={rtl ? 'rtl' : 'ltr'}
-            className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-stone-200 animate-in zoom-in-95 duration-150 text-slate-900"
+            className="w-full max-w-md max-h-[85vh] flex flex-col bg-white rounded-3xl shadow-2xl border border-stone-200/90 animate-in zoom-in-95 duration-150 text-slate-900 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#FF6B00] flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
+            {/* 1. Sticky / Fixed Modal Header */}
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-orange-50 text-[#FF6B00] flex items-center justify-center font-bold text-base shadow-2xs shrink-0 overflow-hidden border border-orange-100">
                   {restaurant.logo_url ? (
                     <img
                       src={restaurant.logo_url}
                       alt={restaurant.name}
-                      className="w-full h-full object-contain p-1"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     restaurant.name.charAt(0).toUpperCase()
                   )}
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 leading-snug">
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug truncate">
                     {restaurant.name}
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs text-slate-500 font-medium truncate">
                     {locationText} · {t.restaurantTag}
                   </p>
                 </div>
@@ -723,50 +750,116 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
 
               <button
                 type="button"
+                id="close-info-modal-btn"
                 onClick={() => setIsInfoModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
                 aria-label={t.close}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {restaurant.description && (
-              <p className="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed bg-[#FAF7F2] p-3 rounded-2xl border border-stone-200/70">
-                {restaurant.description}
-              </p>
-            )}
+            {/* 2. Scrollable Body Content */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+              {/* Description */}
+              {restaurant.description && (
+                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed bg-[#FAF7F2] p-3.5 rounded-2xl border border-stone-200/80">
+                  {restaurant.description}
+                </p>
+              )}
 
-            <div className="space-y-3 text-xs sm:text-sm text-slate-700">
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <Clock className="w-4 h-4 text-[#FF6B00] shrink-0" />
-                <div className="flex-1">
-                  <span className="font-semibold text-slate-900 block text-xs">{t.hours}</span>
-                  <span className="text-slate-500 text-xs">{t.hoursValue}</span>
+              {/* Horaires (Opening Hours) */}
+              <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-xl bg-orange-100 text-[#FF6B00] flex items-center justify-center shrink-0">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-900 block text-xs sm:text-sm">{t.hours}</span>
+                      <span className="text-slate-500 text-[11px]">
+                        {DAY_LABELS[operatingStatus.todayKey][lang]} : {operatingStatus.todayHoursText}
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-2xs ${
+                      operatingStatus.isOpen
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200/60'
+                        : 'bg-rose-100 text-rose-800 border border-rose-200/60'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        operatingStatus.isOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                      }`}
+                    />
+                    {operatingStatus.statusText}
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                  {t.open}
-                </span>
+
+                {/* Weekly Schedule with subtle dividers and sleek highlight badge for current day */}
+                <div className="pt-2 border-t border-slate-200/70 divide-y divide-slate-100">
+                  {DAYS_ORDER.map((dKey) => {
+                    const dSched = operatingStatus.schedule[dKey];
+                    const isToday = dKey === operatingStatus.todayKey;
+                    const dLabel = DAY_LABELS[dKey][lang];
+                    return (
+                      <div
+                        key={dKey}
+                        className={`flex items-center justify-between text-xs py-2 px-2.5 rounded-xl transition-colors ${
+                          isToday
+                            ? 'bg-orange-100/80 font-bold text-slate-900 border border-orange-200/70 shadow-2xs'
+                            : 'text-slate-600 hover:bg-slate-100/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{dLabel}</span>
+                          {isToday && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-[#FF6B00] text-white text-[9px] font-extrabold uppercase tracking-wide">
+                              {lang === 'ar' ? 'اليوم' : lang === 'en' ? 'Today' : "Aujourd'hui"}
+                            </span>
+                          )}
+                        </div>
+                        <span className={dSched.isOpen ? (isToday ? 'text-orange-950 font-bold' : 'text-slate-700 font-medium') : 'text-slate-400 italic'}>
+                          {dSched.isOpen
+                            ? `${dSched.openTime} — ${dSched.closeTime}`
+                            : lang === 'ar'
+                            ? 'مغلق'
+                            : lang === 'en'
+                            ? 'Closed'
+                            : 'Fermé'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
+              {/* Address */}
               {restaurant.address && (
-                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0" />
-                  <div className="flex-1">
-                    <span className="font-semibold text-slate-900 block text-xs">{t.address}</span>
-                    <span className="text-slate-600 text-xs">{restaurant.address}</span>
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+                  <div className="w-7 h-7 rounded-xl bg-orange-100 text-[#FF6B00] flex items-center justify-center shrink-0 mt-0.5">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-bold text-slate-900 block text-xs mb-0.5">{t.address}</span>
+                    <span className="text-slate-600 text-xs leading-relaxed break-words">{restaurant.address}</span>
                   </div>
                 </div>
               )}
 
+              {/* Phone */}
               {restaurant.phone && (
-                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <Phone className="w-4 h-4 text-[#FF6B00] shrink-0" />
-                  <div className="flex-1">
-                    <span className="font-semibold text-slate-900 block text-xs">{t.phone}</span>
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+                  <div className="w-7 h-7 rounded-xl bg-orange-100 text-[#FF6B00] flex items-center justify-center shrink-0">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-bold text-slate-900 block text-xs mb-0.5">{t.phone}</span>
                     <a
                       href={`tel:${restaurant.phone}`}
-                      className="text-[#FF6B00] font-bold text-xs hover:underline"
+                      className="text-[#FF6B00] font-bold text-xs sm:text-sm hover:underline inline-flex items-center gap-1"
                     >
                       {restaurant.phone}
                     </a>
@@ -774,10 +867,10 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                 </div>
               )}
 
-              {/* Social Media Links in Modal */}
+              {/* Contact & Social Links: Format social buttons into a clean, horizontal pill-button row with hover states */}
               {(restaurant.instagram_url || restaurant.facebook_url || restaurant.tiktok_url) && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="font-semibold text-slate-900 block text-xs mb-2">
+                <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
+                  <span className="font-bold text-slate-900 block text-xs">
                     {t.followUs}
                   </span>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -786,9 +879,9 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                         href={restaurant.instagram_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-pink-600 hover:bg-pink-50 transition-colors shadow-2xs"
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-pink-200 text-xs font-semibold text-pink-700 hover:bg-pink-50 hover:border-pink-300 hover:scale-102 transition-all shadow-2xs cursor-pointer"
                       >
-                        <Instagram className="w-3.5 h-3.5" />
+                        <Instagram className="w-3.5 h-3.5 text-pink-600" />
                         <span>Instagram</span>
                       </a>
                     )}
@@ -797,9 +890,9 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                         href={restaurant.facebook_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors shadow-2xs"
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-50 hover:border-blue-300 hover:scale-102 transition-all shadow-2xs cursor-pointer"
                       >
-                        <Facebook className="w-3.5 h-3.5" />
+                        <Facebook className="w-3.5 h-3.5 text-blue-600" />
                         <span>Facebook</span>
                       </a>
                     )}
@@ -808,9 +901,9 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
                         href={restaurant.tiktok_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 hover:bg-slate-100 transition-colors shadow-2xs"
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-300 text-xs font-semibold text-slate-900 hover:bg-slate-100 hover:border-slate-400 hover:scale-102 transition-all shadow-2xs cursor-pointer"
                       >
-                        <Music2 className="w-3.5 h-3.5" />
+                        <Music2 className="w-3.5 h-3.5 text-slate-800" />
                         <span>TikTok</span>
                       </a>
                     )}
@@ -819,13 +912,17 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({ slug, restaurantSlug, on
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsInfoModalOpen(false)}
-              className="mt-6 w-full py-2.5 rounded-xl bg-[#FF6B00] text-white text-xs sm:text-sm font-bold shadow-sm hover:bg-orange-600 active:scale-98 transition-all cursor-pointer"
-            >
-              {t.close}
-            </button>
+            {/* 3. Sticky Bottom Action Bar */}
+            <div className="sticky bottom-0 bg-white/95 backdrop-blur-md px-5 sm:px-6 py-3.5 border-t border-slate-100 shrink-0">
+              <button
+                type="button"
+                id="bottom-close-info-modal-btn"
+                onClick={() => setIsInfoModalOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-[#FF6B00] text-white text-xs sm:text-sm font-bold shadow-sm hover:bg-orange-600 active:scale-98 transition-all cursor-pointer"
+              >
+                {t.close}
+              </button>
+            </div>
           </div>
         </div>
       )}

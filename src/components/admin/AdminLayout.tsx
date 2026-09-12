@@ -139,9 +139,12 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
   primary_color text default '#2563eb' not null,
   is_published boolean default false not null,
   currency text default 'DH' not null,
+  operating_hours jsonb,
   created_at timestamptz default timezone('utc'::text, now()) not null,
   updated_at timestamptz default timezone('utc'::text, now()) not null
 );
+
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS operating_hours jsonb;
 
 CREATE TABLE IF NOT EXISTS public.establishments (
   id uuid default uuid_generate_v4() primary key,

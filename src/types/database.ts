@@ -2,6 +2,23 @@ export type ThemeId = 'minimal' | 'classic' | 'luxury' | 'moroccan' | 'bistro';
 
 export type LanguageCode = 'fr' | 'ar' | 'en';
 
+export type DayOfWeek =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
+
+export interface DaySchedule {
+  isOpen: boolean;
+  openTime: string;  // e.g. "09:00"
+  closeTime: string; // e.g. "23:00"
+}
+
+export type OperatingHoursSchedule = Record<DayOfWeek, DaySchedule>;
+
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -26,6 +43,8 @@ export interface Restaurant {
   primary_color: string;
   is_published: boolean;
   currency?: string;
+  operating_hours?: OperatingHoursSchedule | null;
+  opening_hours?: OperatingHoursSchedule | null;
   created_at?: string;
   updated_at?: string;
 }

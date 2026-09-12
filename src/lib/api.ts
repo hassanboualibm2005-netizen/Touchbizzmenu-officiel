@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured, localStore } from './supabase';
 import { Restaurant, Category, MenuItem, ThemeId } from '../types/database';
+import { normalizeOperatingHours } from './operatingHours';
 
 export interface PublicMenuData {
   restaurant: Restaurant;
@@ -74,9 +75,16 @@ function getLocalPublicMenu(slug: string): {
   const fallbackCats = localStore.getCategories(fallbackRest.id).filter((c) => c.is_visible);
   const fallbackItems = localStore.getItems(fallbackRest.id).filter((i) => i.is_visible);
 
+  const normalizedRest: Restaurant = {
+    ...fallbackRest,
+    operating_hours: normalizeOperatingHours(
+      fallbackRest.operating_hours || (fallbackRest as any).opening_hours
+    ),
+  };
+
   return {
     data: {
-      restaurant: fallbackRest,
+      restaurant: normalizedRest,
       categories: fallbackCats,
       items: fallbackItems,
     },
@@ -176,9 +184,16 @@ export async function fetchPublicMenu(slug: string): Promise<{
         description: it.description || it.description_fr || null,
       })) as MenuItem[];
 
+      const normalizedRest: Restaurant = {
+        ...(rest as Restaurant),
+        operating_hours: normalizeOperatingHours(
+          rest.operating_hours || (rest as any).opening_hours
+        ),
+      };
+
       return {
         data: {
-          restaurant: rest as Restaurant,
+          restaurant: normalizedRest,
           categories: normalizedCats,
           items: normalizedItems,
         },
@@ -421,6 +436,11 @@ export async function saveRestaurantProfile(
     primary_color: restaurant.primary_color || '#2563eb',
     is_published: restaurant.is_published ?? true,
     currency: restaurant.currency || 'DH',
+    operating_hours: restaurant.operating_hours
+      ? normalizeOperatingHours(restaurant.operating_hours)
+      : (restaurant as any).opening_hours
+      ? normalizeOperatingHours((restaurant as any).opening_hours)
+      : null,
     updated_at: new Date().toISOString(),
   };
 
@@ -445,11 +465,31 @@ export async function saveRestaurantProfile(
       }
 
       // Also upsert into restaurants table
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('restaurants')
         .upsert(updatedRest)
         .select()
         .single();
+
+      // If remote Supabase schema is missing the operating_hours column, retry without it
+      if (
+        error &&
+        (error.message?.includes('operating_hours') ||
+          error.message?.includes('opening_hours') ||
+          error.code === '42703' ||
+          error.code === 'PGRST204')
+      ) {
+        const { operating_hours, opening_hours, ...restWithoutHours } = updatedRest as any;
+        const retryResult = await supabase
+          .from('restaurants')
+          .upsert(restWithoutHours)
+          .select()
+          .single();
+        if (!retryResult.error) {
+          data = { ...retryResult.data, operating_hours: updatedRest.operating_hours };
+          error = null;
+        }
+      }
 
       if (error && !saved) {
         if (handleDbError(error, 'saveRestaurantProfile')) {
